@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import Header from './components/Header.jsx';
-import CopyInputForm from './components/CopyInputForm.jsx';
+import CopyInputForm, { validateField } from './components/CopyInputForm.jsx';
 import ResultDisplay from './components/ResultDisplay.jsx';
 import { DEFAULT_MARKET_CODE, MARKETS, SAMPLE_RESULT } from './constants/markets.js';
 import { requestLocalization } from './services/api.js';
@@ -13,6 +13,7 @@ export default function App() {
     targetLanguage: MARKETS[DEFAULT_MARKET_CODE].language,
   });
 
+  const [fieldErrors, setFieldErrors] = useState({});
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,13 +26,14 @@ export default function App() {
       productName: market.sample.productName,
       sourceCopy: market.sample.sourceCopy,
     }));
+    setFieldErrors({});
     setError(null);
   }, [formData.targetCountry]);
 
   // 表单变更
   const handleFormChange = useCallback((newFormData) => {
     setFormData(newFormData);
-    // 当存在旧结果或旧错误时，再次编辑输入即清除旧结果，恢复待生成状态
+    // 生成完成后再次编辑输入时，清除旧结果并恢复待生成状态（PRD 4.4 约定）
     if (result) {
       setResult(null);
     }
@@ -40,42 +42,43 @@ export default function App() {
     }
   }, [result, error]);
 
+  const handleClearFieldError = useCallback((field) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }, []);
+
   // 提交本地化生成
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) {
       e.preventDefault();
     }
+    if (loading) return;
 
-    const trimmedName = formData.productName.trim();
-    const trimmedCopy = formData.sourceCopy.trim();
+    // 前端严格校验（必填、纯空白及长度上限）
+    const pErr = validateField('productName', formData.productName);
+    const sErr = validateField('sourceCopy', formData.sourceCopy);
 
-    // 基础输入长度校验（与后端口径保持一致）
-    const nameLength = Array.from(trimmedName).length;
-    if (!trimmedName || nameLength < 1 || nameLength > 100) {
-      setError({
-        code: 'VALIDATION_ERROR',
-        message: '商品名称不能为空且须在 1～100 个字符之内。',
+    if (pErr || sErr) {
+      setFieldErrors({
+        productName: pErr,
+        sourceCopy: sErr,
       });
       return;
     }
 
-    const copyLength = Array.from(trimmedCopy).length;
-    if (!trimmedCopy || copyLength < 1 || copyLength > 2000) {
-      setError({
-        code: 'VALIDATION_ERROR',
-        message: '原始营销文案不能为空且须在 1～2,000 个字符之内。',
-      });
-      return;
-    }
-
+    setFieldErrors({});
     setLoading(true);
     setError(null);
     setResult(null);
 
     try {
       const data = await requestLocalization({
-        productName: trimmedName,
-        sourceCopy: trimmedCopy,
+        productName: formData.productName.trim(),
+        sourceCopy: formData.sourceCopy.trim(),
         targetCountry: formData.targetCountry,
         targetLanguage: formData.targetLanguage,
       });
@@ -123,6 +126,7 @@ export default function App() {
                 onClick={() => {
                   setResult(SAMPLE_RESULT);
                   setError(null);
+                  setFieldErrors({});
                 }}
                 className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition"
               >
@@ -143,6 +147,8 @@ export default function App() {
               onApplySample={handleApplySample}
               onSubmit={handleSubmit}
               loading={loading}
+              fieldErrors={fieldErrors}
+              onClearFieldError={handleClearFieldError}
             />
           </div>
 
