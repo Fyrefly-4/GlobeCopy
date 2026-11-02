@@ -1,7 +1,9 @@
 import { createApp } from './app.js';
 import { config } from './config.js';
+import { createLocalizer } from './localization/client.js';
 
-const server = createApp().listen(config.port, config.host, () => {
+const app = createApp({ localize: createLocalizer(config.llm) });
+const server = app.listen(config.port, config.host, () => {
   console.log(`GlobeCopy backend: http://${config.host}:${config.port}`);
 });
 

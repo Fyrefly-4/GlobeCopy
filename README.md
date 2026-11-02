@@ -22,7 +22,24 @@ npm --prefix backend run dev
 
 普通启动使用 `npm --prefix backend start`，开发模式会在代码变化后自动重启。
 
-`PORT` 默认为 `3001`，`LLM_TIMEOUT_MS` 默认为 `60000`。模型密钥、基础地址和模型标识通过 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL` 配置；实际模型调用将在开发步骤 2 接入。
+`PORT` 默认为 `3001`，`LLM_TIMEOUT_MS` 默认为 `60000`。不配置密钥也可启动服务和访问健康检查；有效的本地化请求会返回配置缺失错误。
+
+## 轻量通用模型接口
+
+业务层只调用 `localize(input)`。适配层使用 Node.js 内置 `fetch`，无额外模型 SDK 或供应商框架。
+
+| 后端环境变量 | 用途与默认值 |
+| --- | --- |
+| `LLM_API_KEY` | 必填，模型服务密钥，仅在后端保存 |
+| `LLM_BASE_URL` | 默认 `https://api.deepseek.com`，支持兼容服务的版本或路径前缀，例如 `https://example.com/v1` |
+| `LLM_MODEL` | 默认 `deepseek-flash`，切换服务时填写该服务的模型标识 |
+| `LLM_TIMEOUT_MS` | 默认 `60000`，覆盖请求及响应体读取的总时限 |
+
+基础地址不要包含 `/chat/completions`、查询参数、片段或内嵌账号密码。适配层保留基础地址的路径前缀，并追加 `/chat/completions`；修改配置后重启后端。
+
+切换兼容服务通常只需修改前三个变量。兼容边界为：Bearer 鉴权、非流式 Chat Completions、`response_format: { "type": "json_object" }`、`max_tokens` 参数，以及 `choices[0].message.content` 和 `finish_reason` 响应结构。当前输出预算为 8192 tokens，不发送 DeepSeek 专属参数，不自动重试。不支持这些能力或需要其他协议的服务，需要后续调整适配器。
+
+DeepSeek 默认配置及 JSON 输出方式参考 [官方接入文档](https://api-docs.deepseek.com/) 与 [JSON Output 文档](https://api-docs.deepseek.com/guides/json_mode/)，于 2026 年 11 月 2 日核对。文档核对不代表真实账号和生成质量已验证。
 
 ## 项目文档
 
@@ -52,22 +69,13 @@ npm --prefix frontend run preview
 
 ## 当前接口与验证
 
-后端步骤 1 已完成，尚未接入模型，不会产生模型调用费用。
+后端阶段 2 的代码已实现，`POST /api/localize` 已连接通用模型适配层，原临时 501 状态已移除。配置有效时，该接口会调用配置的模型服务。按当前开发约定，本次未进行真实模型调用，等待前端完成后联调。
 
-`POST /api/localize` 使用 `Content-Type: application/json`，后续请求和成功结构以 PRD 为准。当前合法 JSON 请求固定返回 HTTP 501：
+请求使用 `Content-Type: application/json`，输入、成功和错误结构见 [接口约定](docs/API_CONTRACT.md)。后端已校验商品名、原文长度及市场语言组合；模型结果必须为完整 JSON、非空文案与中文对照、2～4 条非空适配说明。空内容、代码块包裹、截断输出和非法结构均返回明确错误，不静默使用不完整内容。
 
-```json
-{
-  "error": {
-    "code": "LOCALIZATION_NOT_IMPLEMENTED",
-    "message": "本地化模型尚未接入，请在完成模型接入后重试。"
-  }
-}
-```
+所有错误采用 `{ "error": { "code": "...", "message": "..." } }` 结构。基础 HTTP 错误包括：非法输入的 `400 VALIDATION_ERROR`、超过 32 KiB 请求体限制的 `413 PAYLOAD_TOO_LARGE`、不支持的内容类型或编码的 `415 UNSUPPORTED_MEDIA_TYPE`、未知接口的 `404 NOT_FOUND`，以及隐藏内部详情的 `500 INTERNAL_ERROR`。请求体字节限制与文案字符数校验分别执行。
 
-这是当前开发阶段的临时状态，将在步骤 2 接入真实模型后移除，不作为 MVP 最终业务错误码。商品字段与市场组合校验将在后续步骤实现。
-
-所有错误采用 `{ "error": { "code": "...", "message": "..." } }` 结构。基础 HTTP 错误包括：非法 JSON 的 `400 VALIDATION_ERROR`、超过 32 KiB 请求体限制的 `413 PAYLOAD_TOO_LARGE`、不支持的内容类型或编码的 `415 UNSUPPORTED_MEDIA_TYPE`、未知接口的 `404 NOT_FOUND`，以及隐藏内部详情的 `500 INTERNAL_ERROR`。请求体字节限制不代替后续的文案字符数校验。
+模型错误包括：`503 SERVICE_NOT_CONFIGURED`、`502 UPSTREAM_ERROR`、`502 INVALID_MODEL_RESPONSE` 和 `504 UPSTREAM_TIMEOUT`。不向客户端透传原始上游错误或密钥。
 
 运行接口测试：
 
@@ -75,4 +83,6 @@ npm --prefix frontend run preview
 npm --prefix backend test
 ```
 
-前端工程及开发代理已完成；页面联调、真实模型接入和构建托管仍待后续步骤完成。
+测试全部使用受控响应或本机模拟模型服务，不读取真实模型密钥、不访问外部模型服务、不产生模型调用费用。测试覆盖协议、三个市场参数、输入输出校验、错误处理及真实 HTTP 请求取消；不验证生成内容的语言和文化质量。
+
+前端工程及开发代理已完成；页面、真实模型联调、内容质量验收和构建托管仍待后续步骤完成。

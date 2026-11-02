@@ -1,8 +1,8 @@
 import express from 'express';
 import { ApiError, errorHandler } from './errors.js';
-import { localizeRouter } from './routes/localize.js';
+import { createLocalizeRouter } from './routes/localize.js';
 
-export function createApp() {
+export function createApp({ localize }) {
   const app = express();
   app.disable('x-powered-by');
 
@@ -17,7 +17,7 @@ export function createApp() {
     next();
   });
   app.use(express.json({ limit: '32kb' }));
-  app.use('/api/localize', localizeRouter);
+  app.use('/api/localize', createLocalizeRouter(localize));
   app.use((req, res, next) => {
     next(new ApiError(404, 'NOT_FOUND', '请求的接口不存在。'));
   });

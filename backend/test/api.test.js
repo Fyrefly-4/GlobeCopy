@@ -3,12 +3,18 @@ import { after, before, test } from 'node:test';
 import express from 'express';
 import { createApp } from '../src/app.js';
 import { errorHandler } from '../src/errors.js';
+import { createLocalizer } from '../src/localization/client.js';
+import { input, llmConfig } from '../test-support/localization.js';
 
 let server;
 let baseUrl;
 
 before(async () => {
-  server = createApp().listen(0, '127.0.0.1');
+  server = createApp({
+    localize: createLocalizer({ ...llmConfig, apiKey: '' }, {
+      fetchImpl: () => { assert.fail('API tests must not call external model services'); },
+    }),
+  }).listen(0, '127.0.0.1');
   await new Promise(resolve => server.once('listening', resolve));
   baseUrl = `http://127.0.0.1:${server.address().port}`;
 });
@@ -31,13 +37,18 @@ test('health check works without model credentials', async () => {
   assert.equal(response.headers.get('x-powered-by'), null);
 });
 
-test('localize explicitly reports that model integration is pending', async () => {
-  const response = await post(JSON.stringify({
-    productName: '便携保温杯', sourceCopy: '轻巧便携。',
-    targetCountry: 'US', targetLanguage: 'en-US',
-  }));
-  assert.equal(response.status, 501);
-  assert.equal((await response.json()).error.code, 'LOCALIZATION_NOT_IMPLEMENTED');
+test('localize reports missing credentials without making a network request', async () => {
+  const response = await post(JSON.stringify(input));
+  assert.equal(response.status, 503);
+  assert.equal((await response.json()).error.code, 'SERVICE_NOT_CONFIGURED');
+});
+
+test('invalid fields fail before checking credentials or calling the model', async () => {
+  for (const body of [{}, { ...input, targetCountry: 'JP' }, { ...input, sourceCopy: ' ' }]) {
+    const response = await post(JSON.stringify(body));
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).error.code, 'VALIDATION_ERROR');
+  }
 });
 
 test('malformed JSON returns a safe validation error', async () => {
