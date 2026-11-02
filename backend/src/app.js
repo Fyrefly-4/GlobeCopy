@@ -1,4 +1,6 @@
 import express from 'express';
+import { ApiError, errorHandler } from './errors.js';
+import { localizeRouter } from './routes/localize.js';
 
 export function createApp() {
   const app = express();
@@ -7,6 +9,19 @@ export function createApp() {
   app.get('/api/health', (req, res) => {
     res.json({ data: { status: 'ok' } });
   });
+
+  app.use('/api/localize', (req, res, next) => {
+    if (req.method === 'POST' && !req.is('application/json')) {
+      return next(new ApiError(415, 'UNSUPPORTED_MEDIA_TYPE', '请使用 application/json 提交请求。'));
+    }
+    next();
+  });
+  app.use(express.json({ limit: '32kb' }));
+  app.use('/api/localize', localizeRouter);
+  app.use((req, res, next) => {
+    next(new ApiError(404, 'NOT_FOUND', '请求的接口不存在。'));
+  });
+  app.use(errorHandler);
 
   return app;
 }
