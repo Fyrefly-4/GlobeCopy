@@ -10,11 +10,19 @@ export default function ResultDisplay({
   result,
   market,
   loading = false,
-  error = null,
+  isSample = false,
 }) {
   const [copyStatus, setCopyStatus] = useState('idle'); // 'idle' | 'copied' | 'error'
   const [tipIndex, setTipIndex] = useState(0);
   const localizedCopyRef = useRef(null);
+  const copyTimerRef = useRef(null);
+
+  useEffect(() => () => clearTimeout(copyTimerRef.current), []);
+
+  const resetCopyStatusAfter = (delay) => {
+    clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopyStatus('idle'), delay);
+  };
 
   // 加载中轮播提示文案
   useEffect(() => {
@@ -36,28 +44,32 @@ export default function ResultDisplay({
       if (navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(result.localizedCopy);
         setCopyStatus('copied');
-        setTimeout(() => setCopyStatus('idle'), 2000);
+        resetCopyStatusAfter(2000);
         return;
       }
       throw new Error('Clipboard API not available');
     } catch {
       // 降级使用 document.execCommand
+      let textarea;
+      const previousFocus = document.activeElement;
       try {
-        const textarea = document.createElement('textarea');
+        textarea = document.createElement('textarea');
         textarea.value = result.localizedCopy;
         textarea.style.position = 'fixed';
         textarea.style.opacity = '0';
         document.body.appendChild(textarea);
         textarea.select();
         const success = document.execCommand('copy');
-        document.body.removeChild(textarea);
         if (success) {
           setCopyStatus('copied');
-          setTimeout(() => setCopyStatus('idle'), 2000);
+          resetCopyStatusAfter(2000);
           return;
         }
       } catch {
         // ignore
+      } finally {
+        textarea?.remove();
+        previousFocus?.focus();
       }
 
       // 如果依然失败，提示手动复制并自动全选对应文本
@@ -69,14 +81,14 @@ export default function ResultDisplay({
         sel?.removeAllRanges();
         sel?.addRange(range);
       }
-      setTimeout(() => setCopyStatus('idle'), 4000);
+      resetCopyStatusAfter(4000);
     }
   };
 
   // 1. 加载态：现代骨架屏与动态思考动效
   if (loading) {
     return (
-      <div className="space-y-5 rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
+      <div role="status" aria-live="polite" className="space-y-5 rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
         {/* 顶部加载状态提示 */}
         <div className="flex items-center justify-between rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3">
           <div className="flex items-center gap-3">
@@ -161,7 +173,7 @@ export default function ResultDisplay({
   return (
     <div className="space-y-5">
       {/* 市场概览横幅 */}
-      <div className="flex items-center justify-between rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50/90 via-blue-50/50 to-white px-4 py-3 shadow-xs">
+      <div className="flex flex-wrap gap-2 items-center justify-between rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50/90 via-blue-50/50 to-white px-4 py-3 shadow-xs">
         <div className="flex items-center gap-2.5">
           <span className="text-xl">{market?.flag || '🌐'}</span>
           <div>
@@ -177,13 +189,13 @@ export default function ResultDisplay({
           </div>
         </div>
         <span className="rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-600/20">
-          ✓ 生成成功
+          {isSample ? '排版样例 · 非 AI 生成' : '✓ 生成成功'}
         </span>
       </div>
 
       {/* 区域 1：本地化营销文案（带一键复制） */}
       <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition hover:shadow-md">
-        <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="mb-3 flex flex-wrap gap-2 items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white shadow-sm">
               1
@@ -195,7 +207,7 @@ export default function ResultDisplay({
           </div>
 
           {/* 复制纯文本按钮 */}
-          <div>
+          <div aria-live="polite">
             {copyStatus === 'copied' ? (
               <button
                 type="button"

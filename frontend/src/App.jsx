@@ -17,6 +17,8 @@ export default function App() {
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [result, setResult] = useState(null);
+  const [resultMarket, setResultMarket] = useState(null);
+  const [isSampleResult, setIsSampleResult] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -30,6 +32,7 @@ export default function App() {
     }));
     setFieldErrors({});
     setError(null);
+    setResult(null);
   }, [formData.targetCountry]);
 
   // 表单变更
@@ -85,6 +88,8 @@ export default function App() {
         targetLanguage: formData.targetLanguage,
       });
       setResult(data);
+      setResultMarket(MARKETS[formData.targetCountry]);
+      setIsSampleResult(false);
     } catch (err) {
       // 失败时完整保留用户已输入内容，展现面向用户的清晰错误提示
       setError({
@@ -130,8 +135,11 @@ export default function App() {
             ) : (
               <button
                 type="button"
+                disabled={loading}
                 onClick={() => {
                   setResult(SAMPLE_RESULT);
+                  setResultMarket(MARKETS.US);
+                  setIsSampleResult(true);
                   setError(null);
                   setFieldErrors({});
                 }}
@@ -170,8 +178,10 @@ export default function App() {
           {/* 右栏：结果展示 */}
           <div className="lg:col-span-7">
             <ResultDisplay
+              key={result?.localizedCopy || 'empty'}
               result={result}
-              market={currentMarket}
+              market={result ? resultMarket : currentMarket}
+              isSample={isSampleResult}
               loading={loading}
             />
           </div>

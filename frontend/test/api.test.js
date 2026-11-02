@@ -3,6 +3,25 @@ import assert from 'node:assert/strict';
 import { requestLocalization, ApiRequestError } from '../src/services/api.js';
 
 describe('frontend api service', () => {
+  it('rejects empty text and invalid cultural notes before rendering', async () => {
+    const originalFetch = globalThis.fetch;
+    const valid = { localizedCopy: 'copy', chineseTranslation: '对照', culturalNotes: ['说明一', '说明二'] };
+    try {
+      for (const data of [
+        { ...valid, localizedCopy: ' ' },
+        { ...valid, culturalNotes: [] },
+        { ...valid, culturalNotes: ['说明', { unexpected: 'object' }] },
+      ]) {
+        globalThis.fetch = async () => Response.json({ data });
+        await assert.rejects(requestLocalization({
+          productName: '杯子', sourceCopy: '便携', targetCountry: 'US', targetLanguage: 'en-US',
+        }), { code: 'INVALID_MODEL_RESPONSE' });
+      }
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   it('sends trimmed fields and receives localized result', async () => {
     const originalFetch = globalThis.fetch;
     try {

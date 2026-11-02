@@ -21,9 +21,9 @@ export default function CopyInputForm({
   const currentMarket = MARKETS[formData.targetCountry] || MARKETS.US;
 
   // Unicode 码点精准计数
-  const sourceCopyLength = Array.from(formData.sourceCopy || '').length;
+  const sourceCopyLength = Array.from((formData.sourceCopy || '').trim()).length;
   const isSourceCopyOverLimit = sourceCopyLength > 2000;
-  const productNameLength = Array.from(formData.productName || '').length;
+  const productNameLength = Array.from((formData.productName || '').trim()).length;
   const isProductNameOverLimit = productNameLength > 100;
 
   // 字符计数器颜色指示器
@@ -131,6 +131,8 @@ export default function CopyInputForm({
               id="productName"
               type="text"
               required
+              aria-invalid={Boolean(productNameError)}
+              aria-describedby={productNameError ? 'productNameError' : undefined}
               disabled={loading}
               value={formData.productName}
               onChange={handleInputChange('productName')}
@@ -145,7 +147,7 @@ export default function CopyInputForm({
           </div>
 
           {productNameError && (
-            <p className="mt-1.5 flex items-center gap-1.5 text-xs text-rose-600 animate-in fade-in duration-200">
+            <p id="productNameError" className="mt-1.5 flex items-center gap-1.5 text-xs text-rose-600 animate-in fade-in duration-200">
               <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 7.5h.008v.008H12v-.008Z" />
               </svg>
@@ -231,6 +233,8 @@ export default function CopyInputForm({
             id="sourceCopy"
             rows={6}
             required
+            aria-invalid={Boolean(sourceCopyError)}
+            aria-describedby={sourceCopyError ? 'sourceCopyError' : undefined}
             disabled={loading}
             value={formData.sourceCopy}
             onChange={handleInputChange('sourceCopy')}
@@ -244,7 +248,7 @@ export default function CopyInputForm({
           />
 
           {sourceCopyError ? (
-            <p className="mt-1.5 flex items-center gap-1.5 text-xs text-rose-600 animate-in fade-in duration-200">
+            <p id="sourceCopyError" className="mt-1.5 flex items-center gap-1.5 text-xs text-rose-600 animate-in fade-in duration-200">
               <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 7.5h.008v.008H12v-.008Z" />
               </svg>
@@ -252,7 +256,7 @@ export default function CopyInputForm({
             </p>
           ) : (
             <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-400">
-              <span>按 Unicode 码点标准计数</span>
+              <span>去除首尾空白后计数</span>
               {isSourceCopyOverLimit && (
                 <span className="font-semibold text-rose-600">已超出上限限制</span>
               )}

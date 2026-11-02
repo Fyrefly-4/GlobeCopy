@@ -25,7 +25,7 @@ export default function ErrorBanner({
   };
 
   return (
-    <div className="relative mb-6 overflow-hidden rounded-2xl border border-rose-200/90 bg-rose-50/70 p-4 shadow-xs animate-in fade-in slide-in-from-top-2 duration-200 sm:p-5">
+    <div role="alert" className="relative mb-6 overflow-hidden rounded-2xl border border-rose-200/90 bg-rose-50/70 p-4 shadow-xs animate-in fade-in slide-in-from-top-2 duration-200 sm:p-5">
       <div className="flex items-start gap-3.5">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600 shadow-xs">
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
@@ -85,6 +85,7 @@ export default function ErrorBanner({
             onClick={onDismiss}
             className="text-rose-400 hover:text-rose-600 transition"
             title="关闭提示"
+            aria-label="关闭提示"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />

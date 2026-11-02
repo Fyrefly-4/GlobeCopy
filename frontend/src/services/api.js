@@ -86,8 +86,12 @@ export async function requestLocalization({
     !body ||
     !body.data ||
     typeof body.data.localizedCopy !== 'string' ||
+    !body.data.localizedCopy.trim() ||
     typeof body.data.chineseTranslation !== 'string' ||
-    !Array.isArray(body.data.culturalNotes)
+    !body.data.chineseTranslation.trim() ||
+    !Array.isArray(body.data.culturalNotes) ||
+    body.data.culturalNotes.length < 2 || body.data.culturalNotes.length > 4 ||
+    !body.data.culturalNotes.every(note => typeof note === 'string' && note.trim())
   ) {
     throw new ApiRequestError(
       '服务返回的数据结构异常，请稍后重试。',
