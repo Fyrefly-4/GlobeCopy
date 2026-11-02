@@ -1,32 +1,8 @@
 import { useState } from 'react';
 import { MARKETS } from '../constants/markets.js';
+import { validateField } from '../utils/validation.js';
 
-export function validateField(field, value) {
-  const trimmed = typeof value === 'string' ? value.trim() : '';
-  const length = Array.from(trimmed).length;
-
-  if (field === 'productName') {
-    if (!trimmed) {
-      return '请输入商品名称（不可仅包含空白字符）。';
-    }
-    if (length > 100) {
-      return `商品名称已超出上限（当前 ${length} / 最大 100 字符）。`;
-    }
-    return '';
-  }
-
-  if (field === 'sourceCopy') {
-    if (!trimmed) {
-      return '请输入原始营销文案（不可仅包含空白字符）。';
-    }
-    if (length > 2000) {
-      return `文案已超出最大长度限制（当前 ${length} / 最大 2,000 字符）。`;
-    }
-    return '';
-  }
-
-  return '';
-}
+export { validateField };
 
 export default function CopyInputForm({
   formData,
@@ -284,7 +260,7 @@ export default function CopyInputForm({
           )}
         </div>
 
-        {/* 提交按钮 */}
+        {/* 提交按钮与数据安全说明 */}
         <div className="pt-2">
           <button
             type="submit"
@@ -308,6 +284,10 @@ export default function CopyInputForm({
               </>
             )}
           </button>
+
+          <p className="mt-2.5 text-center text-[11px] leading-relaxed text-slate-400">
+            🔒 您的文案将安全发送至后端配置的大语言模型服务进行跨文化分析处理，请勿提交敏感或机密信息。
+          </p>
         </div>
       </form>
     </div>

@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react';
 import Header from './components/Header.jsx';
-import CopyInputForm, { validateField } from './components/CopyInputForm.jsx';
+import CopyInputForm from './components/CopyInputForm.jsx';
 import ResultDisplay from './components/ResultDisplay.jsx';
+import ErrorBanner from './components/ErrorBanner.jsx';
 import { DEFAULT_MARKET_CODE, MARKETS, SAMPLE_RESULT } from './constants/markets.js';
+import { validateField } from './utils/validation.js';
 import { requestLocalization } from './services/api.js';
 
 export default function App() {
@@ -84,14 +86,19 @@ export default function App() {
       });
       setResult(data);
     } catch (err) {
+      // 失败时完整保留用户已输入内容，展现面向用户的清晰错误提示
       setError({
         code: err.code || 'REQUEST_FAILED',
-        message: err.message || '请求处理失败，请稍后重试。',
+        message: err.message || '请求未能完成，请稍后重试。',
       });
     } finally {
       setLoading(false);
     }
   };
+
+  const handleDismissError = useCallback(() => {
+    setError(null);
+  }, []);
 
   const currentMarket = MARKETS[formData.targetCountry] || MARKETS.US;
 
@@ -137,6 +144,14 @@ export default function App() {
           </div>
         </div>
 
+        {/* 错误提示横幅（支持重试与保留输入） */}
+        <ErrorBanner
+          error={error}
+          onRetry={handleSubmit}
+          onDismiss={handleDismissError}
+          loading={loading}
+        />
+
         {/* 核心双栏布局 */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
           {/* 左栏：输入表单 */}
@@ -158,7 +173,6 @@ export default function App() {
               result={result}
               market={currentMarket}
               loading={loading}
-              error={error}
             />
           </div>
         </div>
