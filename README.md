@@ -28,6 +28,27 @@ npm --prefix backend run dev
 
 - [产品需求](docs/PRD.md)
 - [开发步骤](docs/DEVELOPMENT_PLAN.md)
+- [前后端接口约定](docs/API_CONTRACT.md)
+
+## 前端启动与构建
+
+在另一个终端从项目根目录运行：
+
+```powershell
+npm --prefix frontend ci
+npm --prefix frontend run dev
+```
+
+访问 `http://127.0.0.1:5173`。当前仅搭建工程，React 入口不渲染内容，空白页面是预期状态；尚未设计 Dashboard、业务组件或视觉风格。Tailwind 已接入构建流程，没有添加自定义主题或样式。
+
+启动后端后，访问 `http://127.0.0.1:5173/api/health` 可检查开发代理。默认转发至 `http://127.0.0.1:3001`；如后端端口不同，可复制 `frontend/.env.example` 为 `frontend/.env.local` 并修改 `API_PROXY_TARGET`，然后重启 Vite。不要将模型密钥放入任何前端配置。
+
+```powershell
+npm --prefix frontend run build
+npm --prefix frontend run preview
+```
+
+构建输出到 `frontend/dist`；静态预览地址为 `http://127.0.0.1:4173`，不代理 API。前端端口被占用时会明确退出，不会自动换到其他端口。
 
 ## 当前接口与验证
 
@@ -54,4 +75,4 @@ npm --prefix backend run dev
 npm --prefix backend test
 ```
 
-前端尚未初始化，因此 Vite 代理、页面联调和构建托管仍待后续步骤完成。
+前端工程及开发代理已完成；页面联调、真实模型接入和构建托管仍待后续步骤完成。
