@@ -1,8 +1,11 @@
 import express from 'express';
+import { fileURLToPath } from 'node:url';
 import { ApiError, errorHandler } from './errors.js';
 import { createLocalizeRouter } from './routes/localize.js';
 
-export function createApp({ localize }) {
+const defaultFrontendDist = fileURLToPath(new URL('../../frontend/dist/', import.meta.url));
+
+export function createApp({ localize, frontendDist = defaultFrontendDist }) {
   const app = express();
   app.disable('x-powered-by');
 
@@ -18,6 +21,10 @@ export function createApp({ localize }) {
   });
   app.use(express.json({ limit: '32kb' }));
   app.use('/api/localize', createLocalizeRouter(localize));
+  app.use('/api', (req, res, next) => {
+    next(new ApiError(404, 'NOT_FOUND', '请求的接口不存在。'));
+  });
+  app.use(express.static(frontendDist));
   app.use((req, res, next) => {
     next(new ApiError(404, 'NOT_FOUND', '请求的接口不存在。'));
   });
