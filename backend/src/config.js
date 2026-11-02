@@ -18,8 +18,8 @@ export const config = Object.freeze({
   port: positiveInteger(process.env.PORT, 3001, 'PORT', 65535),
   llm: Object.freeze({
     apiKey: process.env.LLM_API_KEY?.trim() ?? '',
-    baseUrl: process.env.LLM_BASE_URL?.trim() ?? '',
-    model: process.env.LLM_MODEL?.trim() ?? '',
-    timeoutMs: positiveInteger(process.env.LLM_TIMEOUT_MS, 60000, 'LLM_TIMEOUT_MS'),
+    baseUrl: process.env.LLM_BASE_URL?.trim() || 'https://api.deepseek.com',
+    model: process.env.LLM_MODEL?.trim() || 'deepseek-flash',
+    timeoutMs: positiveInteger(process.env.LLM_TIMEOUT_MS, 60000, 'LLM_TIMEOUT_MS', 2147483647),
   }),
 });
