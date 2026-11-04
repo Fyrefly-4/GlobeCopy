@@ -14,7 +14,7 @@ export default function ErrorBanner({
       case 'MODEL_CONFIG_INVALID':
         return '请在页面上方填写供应商、模型 ID 和自己的 API Key。';
       case 'NETWORK_ERROR':
-        return '请检查后端服务是否正在运行（默认监听 http://127.0.0.1:3001），以及终端中是否报错。';
+        return '请检查服务是否可用以及网络连接是否正常，输入内容会保留。';
       case 'UPSTREAM_TIMEOUT':
         return '模型服务处理耗时超过设定的时限，建议精简文案内容或检查当前网络延迟。';
       case 'UPSTREAM_ERROR':

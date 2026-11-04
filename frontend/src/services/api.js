@@ -56,7 +56,7 @@ export async function requestLocalization({
     });
   } catch {
     throw new ApiRequestError(
-      '无法连接到后端服务，请确认后端已启动（默认 http://127.0.0.1:3001）且网络连接正常。',
+      '暂时无法连接服务，请检查网络或稍后重试。',
       'NETWORK_ERROR',
       0,
     );

@@ -14,6 +14,6 @@ function positiveInteger(value, fallback, name, max = Number.MAX_SAFE_INTEGER) {
 }
 
 export const config = Object.freeze({
-  host: '127.0.0.1',
-  port: positiveInteger(process.env.PORT, 3001, 'PORT', 65535),
+  host: '0.0.0.0',
+  port: positiveInteger(process.env.PORT, 9000, 'PORT', 65535),
 });
