@@ -16,10 +16,4 @@ function positiveInteger(value, fallback, name, max = Number.MAX_SAFE_INTEGER) {
 export const config = Object.freeze({
   host: '127.0.0.1',
   port: positiveInteger(process.env.PORT, 3001, 'PORT', 65535),
-  llm: Object.freeze({
-    apiKey: process.env.LLM_API_KEY?.trim() ?? '',
-    baseUrl: process.env.LLM_BASE_URL?.trim() || 'https://api.deepseek.com',
-    model: process.env.LLM_MODEL?.trim() || 'deepseek-flash',
-    timeoutMs: positiveInteger(process.env.LLM_TIMEOUT_MS, 60000, 'LLM_TIMEOUT_MS', 2147483647),
-  }),
 });

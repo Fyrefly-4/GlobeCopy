@@ -1,8 +1,8 @@
 import { createApp } from './app.js';
 import { config } from './config.js';
-import { createLocalizer } from './localization/client.js';
+import { createByokLocalizer } from './localization/byok.js';
 
-const app = createApp({ localize: createLocalizer(config.llm) });
+const app = createApp({ localize: createByokLocalizer() });
 const server = app.listen(config.port, config.host, () => {
   console.log(`GlobeCopy backend: http://${config.host}:${config.port}`);
 });

@@ -14,6 +14,7 @@ export function createApp({ localize, frontendDist = defaultFrontendDist }) {
   });
 
   app.use('/api/localize', (req, res, next) => {
+    res.set('Cache-Control', 'no-store');
     if (req.method === 'POST' && !req.is('application/json')) {
       return next(new ApiError(415, 'UNSUPPORTED_MEDIA_TYPE', '请使用 application/json 提交请求。'));
     }

@@ -3,15 +3,15 @@ import { after, before, test } from 'node:test';
 import express from 'express';
 import { createApp } from '../src/app.js';
 import { errorHandler } from '../src/errors.js';
-import { createLocalizer } from '../src/localization/client.js';
-import { input, llmConfig } from '../test-support/localization.js';
+import { createByokLocalizer } from '../src/localization/byok.js';
+import { input } from '../test-support/localization.js';
 
 let server;
 let baseUrl;
 
 before(async () => {
   server = createApp({
-    localize: createLocalizer({ ...llmConfig, apiKey: '' }, {
+    localize: createByokLocalizer({
       fetchImpl: () => { assert.fail('API tests must not call external model services'); },
     }),
   }).listen(0, '127.0.0.1');
@@ -37,10 +37,10 @@ test('health check works without model credentials', async () => {
   assert.equal(response.headers.get('x-powered-by'), null);
 });
 
-test('localize reports missing credentials without making a network request', async () => {
+test('localize reports missing BYOK configuration without making a network request', async () => {
   const response = await post(JSON.stringify(input));
-  assert.equal(response.status, 503);
-  assert.equal((await response.json()).error.code, 'SERVICE_NOT_CONFIGURED');
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error.code, 'MODEL_CONFIG_INVALID');
 });
 
 test('invalid fields fail before checking credentials or calling the model', async () => {
