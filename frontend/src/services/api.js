@@ -3,6 +3,8 @@
  * 严格遵循 docs/API_CONTRACT.md 约定
  */
 
+import { validateModelSettings } from '../constants/providers.js';
+
 export class ApiRequestError extends Error {
   constructor(message, code = 'REQUEST_ERROR', status = 0) {
     super(message);
@@ -19,6 +21,7 @@ export class ApiRequestError extends Error {
  * @param {string} params.sourceCopy - 原始中文文案
  * @param {string} params.targetCountry - 目标国家代码 (US / JP / DE)
  * @param {string} params.targetLanguage - 对应语言代码 (en-US / ja-JP / de-DE)
+ * @param {{provider: string, model: string, apiKey: string}} params.modelConfig - 本次请求的 BYOK 配置
  * @returns {Promise<{ localizedCopy: string, chineseTranslation: string, culturalNotes: string[] }>}
  */
 export async function requestLocalization({
@@ -26,12 +29,16 @@ export async function requestLocalization({
   sourceCopy,
   targetCountry,
   targetLanguage,
+  modelConfig,
 }) {
+  const configError = validateModelSettings(modelConfig);
+  if (configError) throw new ApiRequestError(configError, 'MODEL_CONFIG_INVALID', 400);
   let response;
 
   try {
     response = await fetch('/api/localize', {
       method: 'POST',
+      cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -40,6 +47,11 @@ export async function requestLocalization({
         sourceCopy: sourceCopy.trim(),
         targetCountry,
         targetLanguage,
+        modelConfig: {
+          provider: modelConfig.provider,
+          model: modelConfig.model.trim(),
+          apiKey: modelConfig.apiKey.trim(),
+        },
       }),
     });
   } catch {
@@ -72,7 +84,7 @@ export async function requestLocalization({
       throw new ApiRequestError('生成超时，请稍后重试。', 'UPSTREAM_TIMEOUT', 504);
     }
     if (response.status === 503) {
-      throw new ApiRequestError('本机模型服务未配置，请检查后端配置。', 'SERVICE_NOT_CONFIGURED', 503);
+      throw new ApiRequestError('模型服务暂不可用，请稍后重试。', 'SERVICE_NOT_CONFIGURED', 503);
     }
 
     throw new ApiRequestError(

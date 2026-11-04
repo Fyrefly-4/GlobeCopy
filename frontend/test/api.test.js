@@ -2,7 +2,21 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { requestLocalization, ApiRequestError } from '../src/services/api.js';
 
+const testModelConfig = { provider: 'deepseek', model: 'user-model', apiKey: 'test-user-key' };
+
 describe('frontend api service', () => {
+  it('rejects missing BYOK before initiating fetch', async () => {
+    const originalFetch = globalThis.fetch;
+    try {
+      globalThis.fetch = () => assert.fail('No request expected');
+      await assert.rejects(requestLocalization({
+        productName: '杯子', sourceCopy: '便携', targetCountry: 'US', targetLanguage: 'en-US',
+      }), { code: 'MODEL_CONFIG_INVALID' });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   it('rejects empty text and invalid cultural notes before rendering', async () => {
     const originalFetch = globalThis.fetch;
     const valid = { localizedCopy: 'copy', chineseTranslation: '对照', culturalNotes: ['说明一', '说明二'] };
@@ -13,7 +27,7 @@ describe('frontend api service', () => {
         { ...valid, culturalNotes: ['说明', { unexpected: 'object' }] },
       ]) {
         globalThis.fetch = async () => Response.json({ data });
-        await assert.rejects(requestLocalization({
+        await assert.rejects(requestLocalization({ modelConfig: testModelConfig,
           productName: '杯子', sourceCopy: '便携', targetCountry: 'US', targetLanguage: 'en-US',
         }), { code: 'INVALID_MODEL_RESPONSE' });
       }
@@ -35,6 +49,8 @@ describe('frontend api service', () => {
         assert.equal(body.sourceCopy, '轻巧便携');
         assert.equal(body.targetCountry, 'US');
         assert.equal(body.targetLanguage, 'en-US');
+        assert.deepEqual(body.modelConfig, testModelConfig);
+        assert.equal(options.cache, 'no-store');
 
         return new Response(
           JSON.stringify({
@@ -48,7 +64,7 @@ describe('frontend api service', () => {
         );
       };
 
-      const result = await requestLocalization({
+      const result = await requestLocalization({ modelConfig: testModelConfig,
         productName: '  保温杯  ',
         sourceCopy: '  轻巧便携  ',
         targetCountry: 'US',
@@ -79,7 +95,7 @@ describe('frontend api service', () => {
 
       await assert.rejects(
         () =>
-          requestLocalization({
+          requestLocalization({ modelConfig: testModelConfig,
             productName: '',
             sourceCopy: '文案',
             targetCountry: 'US',
@@ -107,7 +123,7 @@ describe('frontend api service', () => {
 
       await assert.rejects(
         () =>
-          requestLocalization({
+          requestLocalization({ modelConfig: testModelConfig,
             productName: '测试',
             sourceCopy: '文案',
             targetCountry: 'US',
@@ -139,7 +155,7 @@ describe('frontend api service', () => {
 
       await assert.rejects(
         () =>
-          requestLocalization({
+          requestLocalization({ modelConfig: testModelConfig,
             productName: '测试',
             sourceCopy: '文案',
             targetCountry: 'US',

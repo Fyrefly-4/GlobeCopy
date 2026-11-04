@@ -4,7 +4,7 @@
 
 ## 访问方式
 
-- 前端使用相对路径 `/api/...`，不写死后端地址，不携带模型密钥。
+- 前端使用相对路径 `/api/...`，不写死后端地址。BYOK Key 仅在本地化 POST 请求体中传给本应用后端，不放入 URL；公网必须使用 HTTPS。
 - 开发环境由 Vite 将 `/api` 原样转发到 `http://127.0.0.1:3001`。
 - 后端端口变化时，在 `frontend/.env.local` 设置 `API_PROXY_TARGET`，重启 Vite；该配置仅供开发服务器读取。
 - 构建版本由 Express 同源托管，先构建前端再启动后端，访问后端地址即可。`vite preview` 仅用于预览静态构建，不代理 API。
@@ -26,7 +26,12 @@
   "productName": "便携保温杯",
   "sourceCopy": "轻巧便携，适合日常通勤。",
   "targetCountry": "US",
-  "targetLanguage": "en-US"
+  "targetLanguage": "en-US",
+  "modelConfig": {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "apiKey": "<用户填写的 Key>"
+  }
 }
 ```
 
@@ -46,7 +51,9 @@
 
 模型的两个文本字段必须非空，适配说明必须为 2～4 条非空字符串。后端只返回这三个业务字段，不返回供应商元数据。非法 JSON、空内容、截断结果或字段异常会被拒绝。
 
-原临时 `501 LOCALIZATION_NOT_IMPLEMENTED` 状态已移除。无密钥时，有效请求返回 `503 SERVICE_NOT_CONFIGURED`；配置完整后才会请求上游。
+`modelConfig` 每次请求必填，仅含供应商 ID、模型 ID 和用户 Key。供应商 ID 为 `deepseek`、`siliconflow`、`openrouter`。基础地址由后端固定映射；提交 `baseUrl`、`url` 或未知供应商会被拒绝。模型 ID 最长 200 字符，Key 最长 4096 字符，去除首尾空白后不得含空格、控制字符或非 ASCII 字符。模型 ID 允许字母、数字及 `._:/@+-`。
+
+原临时 501 状态已移除。BYOK 配置缺失或无效返回 `400 MODEL_CONFIG_INVALID`，不回退到服务端密钥。响应包含 `Cache-Control: no-store`。应用不持久保存请求中的 Key，不记录请求体；上游只收到 Bearer Key 和文案消息，Key 不进入提示词。
 
 ## 错误响应与前端处理约定
 
@@ -67,7 +74,7 @@
 | 413 | `PAYLOAD_TOO_LARGE` | 请求体超过 32 KiB |
 | 415 | `UNSUPPORTED_MEDIA_TYPE` | 内容类型或编码不受支持 |
 | 404 | `NOT_FOUND` | 接口不存在 |
-| 503 | `SERVICE_NOT_CONFIGURED` | 密钥缺失或模型服务配置无效 |
+| 400 | `MODEL_CONFIG_INVALID` | BYOK 配置缺失、无效或包含不允许的地址 |
 | 502 | `UPSTREAM_ERROR` | 上游 HTTP 失败或网络异常 |
 | 502 | `INVALID_MODEL_RESPONSE` | 上游成功响应无法解析或业务字段不合法 |
 | 504 | `UPSTREAM_TIMEOUT` | 请求或响应读取超过配置时限 |

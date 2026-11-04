@@ -22,24 +22,27 @@ npm --prefix backend run dev
 
 普通启动使用 `npm --prefix backend start`，开发模式会在代码变化后自动重启。
 
-`PORT` 默认为 `3001`，`LLM_TIMEOUT_MS` 默认为 `60000`。不配置密钥也可启动服务和访问健康检查；有效的本地化请求会返回配置缺失错误。
+`PORT` 默认为 `3001`。模型超时固定为 60 秒。后端无需配置模型密钥；在页面中选择供应商，填写模型 ID 和自己的 API Key 后生成。
 
 ## 轻量通用模型接口
 
 业务层只调用 `localize(input)`。适配层使用 Node.js 内置 `fetch`，无额外模型 SDK 或供应商框架。
 
-| 后端环境变量 | 用途与默认值 |
+| 首批供应商 | 固定 API 基础地址 |
 | --- | --- |
-| `LLM_API_KEY` | 必填，模型服务密钥，仅在后端保存 |
-| `LLM_BASE_URL` | 默认 `https://api.deepseek.com`，支持兼容服务的版本或路径前缀，例如 `https://example.com/v1` |
-| `LLM_MODEL` | 默认 `deepseek-flash`，切换服务时填写该服务的模型标识 |
-| `LLM_TIMEOUT_MS` | 默认 `60000`，覆盖请求及响应体读取的总时限 |
+| DeepSeek | `https://api.deepseek.com` |
+| 硅基流动（中国区） | `https://api.siliconflow.cn/v1` |
+| OpenRouter | `https://openrouter.ai/api/v1` |
 
-基础地址不要包含 `/chat/completions`、查询参数、片段或内嵌账号密码。适配层保留基础地址的路径前缀，并追加 `/chat/completions`；修改配置后重启后端。
+用户只选择供应商，不提交自定义 URL。服务端从固定表中解析地址，禁止重定向；模型 ID 由用户填写，必须选择支持 JSON 输出的文本模型。DeepSeek 默认填写 `deepseek-flash`，另两家不预选模型，避免误用没有权限或不支持所需能力的模型。
 
-切换兼容服务通常只需修改前三个变量。兼容边界为：Bearer 鉴权、非流式 Chat Completions、`response_format: { "type": "json_object" }`、`max_tokens` 参数，以及 `choices[0].message.content` 和 `finish_reason` 响应结构。当前输出预算为 8192 tokens，不发送 DeepSeek 专属参数，不自动重试。不支持这些能力或需要其他协议的服务，需要后续调整适配器。
+Key 只保存在 React 页面内存，不写入本地存储、URL、源码或构建配置。刷新页面或点击「清除 Key」后须重新填写，切换供应商也会清空 Key。生成时 Key 随 POST 请求体进入本应用后端，再通过 Bearer 鉴权发给所选服务；后端只在本次请求中使用，不写入文件、数据库或应用日志，不缓存响应。部署到公网必须使用 HTTPS，并检查托管层不采集请求体。浏览器密码管理器与平台日志策略不受应用内存策略控制。
 
-DeepSeek 默认配置及 JSON 输出方式参考 [官方接入文档](https://api-docs.deepseek.com/) 与 [JSON Output 文档](https://api-docs.deepseek.com/guides/json_mode/)，于 2026 年 11 月 2 日核对。文档核对不代表真实账号和生成质量已验证。
+兼容边界为 Bearer 鉴权、非流式 Chat Completions、`response_format: { "type": "json_object" }`、`max_tokens`、`choices[0].message.content` 与 `finish_reason`。输出预算为 8192 tokens，不发送供应商专属参数，不自动重试。并非三家所有模型均满足要求，账户权限、地区可达性和生成质量仍需实际验证。
+
+2026 年 11 月 4 日核对的协议来源：[DeepSeek](https://api-docs.deepseek.com/)、[硅基流动](https://docs.siliconflow.cn/docs/api/chat-completions-post)、[OpenRouter](https://openrouter.ai/docs/api_reference/overview)。本次仅使用受控测试，没有使用真实用户 Key 请求外部模型。
+
+迁移说明：旧的 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`、`LLM_TIMEOUT_MS` 不再被业务配置读取，也不会作为请求缺失时的回退。已有本机 `.env` 文件不会被自动删除，其中的旧模型配置可自行移除；`.env.example` 只保留端口示例。
 
 ## 项目文档
 
@@ -59,7 +62,7 @@ npm --prefix frontend run dev
 
 访问 `http://127.0.0.1:5173`。Dashboard 已包含输入、国家语言联动、三部分结果、复制、加载及错误重试。可点击「填入测试样例」后生成；「预览排版样例」展示的是明确标注的美国英语静态样例，不会调用模型。
 
-启动后端后，访问 `http://127.0.0.1:5173/api/health` 可检查开发代理。默认转发至 `http://127.0.0.1:3001`；如后端端口不同，可复制 `frontend/.env.example` 为 `frontend/.env.local` 并修改 `API_PROXY_TARGET`，然后重启 Vite。不要将模型密钥放入任何前端配置。
+启动后端后，访问 `http://127.0.0.1:5173/api/health` 可检查开发代理。默认转发至 `http://127.0.0.1:3001`；如后端端口不同，可复制 `frontend/.env.example` 为 `frontend/.env.local` 并修改 `API_PROXY_TARGET`，然后重启 Vite。模型 Key 仅在页面输入框填写，不写入任何前端配置文件。
 
 ```powershell
 npm --prefix frontend run build
@@ -89,7 +92,7 @@ npm --prefix backend start
 
 所有错误采用 `{ "error": { "code": "...", "message": "..." } }` 结构。基础 HTTP 错误包括：非法输入的 `400 VALIDATION_ERROR`、超过 32 KiB 请求体限制的 `413 PAYLOAD_TOO_LARGE`、不支持的内容类型或编码的 `415 UNSUPPORTED_MEDIA_TYPE`、未知接口的 `404 NOT_FOUND`，以及隐藏内部详情的 `500 INTERNAL_ERROR`。请求体字节限制与文案字符数校验分别执行。
 
-模型错误包括：`503 SERVICE_NOT_CONFIGURED`、`502 UPSTREAM_ERROR`、`502 INVALID_MODEL_RESPONSE` 和 `504 UPSTREAM_TIMEOUT`。不向客户端透传原始上游错误或密钥。
+模型错误包括：`400 MODEL_CONFIG_INVALID`、`502 UPSTREAM_ERROR`、`502 INVALID_MODEL_RESPONSE` 和 `504 UPSTREAM_TIMEOUT`。不向客户端透传原始上游错误或密钥。
 
 运行接口测试：
 
@@ -100,4 +103,4 @@ npm --prefix frontend test
 
 测试全部使用受控响应或本机模拟模型服务，不读取真实模型密钥、不访问外部模型服务、不产生模型调用费用。测试覆盖协议、三个市场参数、输入输出校验、错误处理及真实 HTTP 请求取消；不验证生成内容的语言和文化质量。
 
-本轮通过前端 9 项、后端 60 项测试、生产构建与真实构建产物的同源 HTTP 检查。浏览器自动验收受环境限制未完成；剪贴板、窄屏、键盘操作和三市场内容质量详见验收记录中的待确认项。
+BYOK 更新通过前端 12 项、后端 64 项测试与生产构建。此前同源构建检查通过。浏览器自动验收受环境限制未完成；BYOK 页面操作及三家服务的真实调用仍需验证，原有剪贴板、窄屏和三市场内容质量待验项见验收记录。

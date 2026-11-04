@@ -3,11 +3,15 @@ import Header from './components/Header.jsx';
 import CopyInputForm from './components/CopyInputForm.jsx';
 import ResultDisplay from './components/ResultDisplay.jsx';
 import ErrorBanner from './components/ErrorBanner.jsx';
+import ModelSettings from './components/ModelSettings.jsx';
+import { validateModelSettings } from './constants/providers.js';
 import { DEFAULT_MARKET_CODE, MARKETS, SAMPLE_RESULT } from './constants/markets.js';
 import { validateField } from './utils/validation.js';
 import { requestLocalization } from './services/api.js';
 
 export default function App() {
+  const [modelConfig, setModelConfig] = useState({ provider: 'deepseek', model: 'deepseek-flash', apiKey: '' });
+  const [modelError, setModelError] = useState('');
   const [formData, setFormData] = useState({
     productName: '',
     sourceCopy: '',
@@ -66,8 +70,10 @@ export default function App() {
     // 前端严格校验（必填、纯空白及长度上限）
     const pErr = validateField('productName', formData.productName);
     const sErr = validateField('sourceCopy', formData.sourceCopy);
+    const configError = validateModelSettings(modelConfig);
+    setModelError(configError);
 
-    if (pErr || sErr) {
+    if (pErr || sErr || configError) {
       setFieldErrors({
         productName: pErr,
         sourceCopy: sErr,
@@ -86,6 +92,7 @@ export default function App() {
         sourceCopy: formData.sourceCopy.trim(),
         targetCountry: formData.targetCountry,
         targetLanguage: formData.targetLanguage,
+        modelConfig,
       });
       setResult(data);
       setResultMarket(MARKETS[formData.targetCountry]);
@@ -151,6 +158,13 @@ export default function App() {
             )}
           </div>
         </div>
+
+        <ModelSettings value={modelConfig} loading={loading} error={modelError} onChange={value => {
+          setModelConfig(value);
+          setModelError('');
+          setError(null);
+          setResult(null);
+        }} />
 
         {/* 错误提示横幅（支持重试与保留输入） */}
         <ErrorBanner

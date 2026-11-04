@@ -10,7 +10,9 @@ export default function ErrorBanner({
   const getTroubleshootAdvice = (code) => {
     switch (code) {
       case 'SERVICE_NOT_CONFIGURED':
-        return '请确认 backend/.env 中已正确配置 LLM_API_KEY、LLM_BASE_URL 与 LLM_MODEL 并重启后端。';
+        return '模型服务暂不可用，请稍后重试。';
+      case 'MODEL_CONFIG_INVALID':
+        return '请在页面上方填写供应商、模型 ID 和自己的 API Key。';
       case 'NETWORK_ERROR':
         return '请检查后端服务是否正在运行（默认监听 http://127.0.0.1:3001），以及终端中是否报错。';
       case 'UPSTREAM_TIMEOUT':
