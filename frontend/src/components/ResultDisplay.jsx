@@ -189,7 +189,7 @@ export default function ResultDisplay({
           </div>
         </div>
         <span className="rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-600/20">
-          {isSample ? '排版样例 · 非 AI 生成' : '✓ 生成成功'}
+          {isSample ? '演示结果 · 预置内容' : '✓ 生成成功'}
         </span>
       </div>
 

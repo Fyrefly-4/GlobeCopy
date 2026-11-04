@@ -4,8 +4,10 @@ import CopyInputForm from './components/CopyInputForm.jsx';
 import ResultDisplay from './components/ResultDisplay.jsx';
 import ErrorBanner from './components/ErrorBanner.jsx';
 import ModelSettings from './components/ModelSettings.jsx';
+import DemoExperience from './components/DemoExperience.jsx';
+import { getDemo } from './constants/demos.js';
 import { validateModelSettings } from './constants/providers.js';
-import { DEFAULT_MARKET_CODE, MARKETS, SAMPLE_RESULT } from './constants/markets.js';
+import { DEFAULT_MARKET_CODE, MARKETS } from './constants/markets.js';
 import { validateField } from './utils/validation.js';
 import { requestLocalization } from './services/api.js';
 
@@ -27,18 +29,25 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // 填入当前所选市场的官方测试样例
+  // Only populate input; real generation still requires BYOK.
   const handleApplySample = useCallback(() => {
-    const market = MARKETS[formData.targetCountry] || MARKETS.US;
-    setFormData((prev) => ({
-      ...prev,
-      productName: market.sample.productName,
-      sourceCopy: market.sample.sourceCopy,
-    }));
+    setFormData(getDemo('cup', formData.targetCountry).formData);
     setFieldErrors({});
     setError(null);
     setResult(null);
   }, [formData.targetCountry]);
+
+  const handleDemo = (scenarioId, country) => {
+    if (loading) return;
+    const demo = getDemo(scenarioId, country);
+    setFormData(demo.formData);
+    setResult(demo.result);
+    setResultMarket(demo.market);
+    setIsSampleResult(true);
+    setError(null);
+    setFieldErrors({});
+    setModelError('');
+  };
 
   // 表单变更
   const handleFormChange = useCallback((newFormData) => {
@@ -141,25 +150,11 @@ export default function App() {
               >
                 清空结果
               </button>
-            ) : (
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => {
-                  setResult(SAMPLE_RESULT);
-                  setResultMarket(MARKETS.US);
-                  setIsSampleResult(true);
-                  setError(null);
-                  setFieldErrors({});
-                }}
-                className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition"
-              >
-                <span>预览排版样例</span>
-                <span className="text-[10px] text-indigo-400">↗</span>
-              </button>
-            )}
+            ) : null}
           </div>
         </div>
+
+        <DemoExperience onPlay={handleDemo} loading={loading} />
 
         <ModelSettings value={modelConfig} loading={loading} error={modelError}
           expanded={modelExpanded} onToggle={() => setModelExpanded(value => !value)} onChange={value => {
