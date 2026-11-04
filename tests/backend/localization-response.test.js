@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { parseCompletion } from '../src/localization/response.js';
-import { completion, result } from '../test-support/localization.js';
+import { parseCompletion } from '../../backend/src/localization/response.js';
+import { completion, result } from '../backend-support/localization.js';
 
 test('valid output is trimmed and extra fields never leave the adapter', () => {
   assert.deepEqual(parseCompletion(completion({

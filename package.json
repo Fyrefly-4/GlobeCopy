@@ -1,0 +1,13 @@
+{
+  "name": "globecopy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["frontend", "backend"],
+  "engines": { "node": "24.x" },
+  "scripts": {
+    "build": "npm run build --workspace globecopy-frontend",
+    "start": "npm run start --workspace globecopy-backend",
+    "test": "npm run test --workspaces --if-present"
+  }
+}

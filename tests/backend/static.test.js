@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, writeFile, unlink, rmdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { createApp } from '../src/app.js';
+import { createApp } from '../../backend/src/app.js';
 
 test('Express serves only the frontend build while API errors remain JSON', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'globecopy-static-'));

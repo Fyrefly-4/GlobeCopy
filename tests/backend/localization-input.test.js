@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { validateInput } from '../src/localization/input.js';
-import { buildMessages } from '../src/localization/prompt.js';
-import { input } from '../test-support/localization.js';
+import { validateInput } from '../../backend/src/localization/input.js';
+import { buildMessages } from '../../backend/src/localization/prompt.js';
+import { input } from '../backend-support/localization.js';
 
 test('all three markets map to the intended target in the prompt', () => {
   for (const [targetCountry, targetLanguage, label] of [

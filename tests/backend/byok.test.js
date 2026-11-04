@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createByokLocalizer } from '../src/localization/byok.js';
-import { createApp } from '../src/app.js';
-import { input, completion, result } from '../test-support/localization.js';
+import { createByokLocalizer } from '../../backend/src/localization/byok.js';
+import { createApp } from '../../backend/src/app.js';
+import { input, completion, result } from '../backend-support/localization.js';
 
 const modelConfig = { provider: 'deepseek', model: 'user-model', apiKey: 'test-user-key' };
 

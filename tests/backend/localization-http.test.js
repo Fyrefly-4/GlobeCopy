@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { test } from 'node:test';
-import { createApp } from '../src/app.js';
-import { createLocalizer } from '../src/localization/client.js';
-import { completion, input, llmConfig, result } from '../test-support/localization.js';
+import { createApp } from '../../backend/src/app.js';
+import { createLocalizer } from '../../backend/src/localization/client.js';
+import { completion, input, llmConfig, result } from '../backend-support/localization.js';
 
 test('HTTP pipeline uses a local compatible service, never a real provider', async t => {
   let mode = 'success';

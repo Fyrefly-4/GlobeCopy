@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
-import express from 'express';
-import { createApp } from '../src/app.js';
-import { errorHandler } from '../src/errors.js';
-import { createByokLocalizer } from '../src/localization/byok.js';
-import { input } from '../test-support/localization.js';
+import { createRequire } from 'node:module';
+import { createApp } from '../../backend/src/app.js';
+import { errorHandler } from '../../backend/src/errors.js';
+import { createByokLocalizer } from '../../backend/src/localization/byok.js';
+import { input } from '../backend-support/localization.js';
+
+const express = createRequire(new URL('../../backend/package.json', import.meta.url))('express');
 
 let server;
 let baseUrl;
