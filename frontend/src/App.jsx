@@ -12,6 +12,7 @@ import { requestLocalization } from './services/api.js';
 export default function App() {
   const [modelConfig, setModelConfig] = useState({ provider: 'deepseek', model: 'deepseek-flash', apiKey: '' });
   const [modelError, setModelError] = useState('');
+  const [modelExpanded, setModelExpanded] = useState(false);
   const [formData, setFormData] = useState({
     productName: '',
     sourceCopy: '',
@@ -72,6 +73,7 @@ export default function App() {
     const sErr = validateField('sourceCopy', formData.sourceCopy);
     const configError = validateModelSettings(modelConfig);
     setModelError(configError);
+    if (configError) setModelExpanded(true);
 
     if (pErr || sErr || configError) {
       setFieldErrors({
@@ -159,7 +161,8 @@ export default function App() {
           </div>
         </div>
 
-        <ModelSettings value={modelConfig} loading={loading} error={modelError} onChange={value => {
+        <ModelSettings value={modelConfig} loading={loading} error={modelError}
+          expanded={modelExpanded} onToggle={() => setModelExpanded(value => !value)} onChange={value => {
           setModelConfig(value);
           setModelError('');
           setError(null);

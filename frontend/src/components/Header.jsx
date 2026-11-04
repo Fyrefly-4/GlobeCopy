@@ -21,15 +21,12 @@ export default function Header() {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xl font-bold tracking-tight text-slate-900">GlobeCopy</span>
-              <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-700/10">
-                MVP
-              </span>
             </div>
-            <p className="text-xs font-medium text-slate-500">AI 跨文化营销本地化助手 · 湾区出海创新</p>
+            <p className="text-xs font-medium text-slate-500">AI 跨文化营销本地化助手</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
+        <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-600">
           <span className="hidden sm:inline text-slate-400">支持市场：</span>
           <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-slate-700">
             🇺🇸 美国
